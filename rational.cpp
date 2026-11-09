@@ -65,7 +65,16 @@ public:
         return Rational(static_cast<i64>(num), static_cast<i64>(den));
     }
     Rational operator-(const Rational& other) const {
-        return Rational(this->numerator * other.denominator - other.numerator * this->denominator, this->denominator * other.denominator);
+        i64 g = gcd(this->denominator, other.denominator);
+        i64 b1 = this->denominator / g;
+        i64 b2 = other.denominator / g;
+
+        __int128 cross1 = static_cast<__int128>(this->numerator) * b2;
+        __int128 cross2 = static_cast<__int128>(other.numerator) * b1;
+        __int128 num = cross1 - cross2;
+        __int128 den = static_cast<__int128>(b1) * other.denominator;
+
+        return Rational(static_cast<i64>(num), static_cast<i64>(den));
     }
     Rational operator*(const Rational& other) const {
         // instead of multiplying a * c and b * d, find partial GCDs between opposite numerators and denominators
@@ -75,9 +84,18 @@ public:
         return Rational((this->numerator / g1) * (other.numerator / g2), (this->denominator / g2) * (other.denominator / g1));
     }
     Rational operator/(const Rational& other) const {
-        return Rational(this->numerator * other.denominator, this->denominator * other.numerator);
+        if (other.numerator == 0) {
+            throw std::invalid_argument("Denominator can't be zero");
+        }
+        i64 g1 = gcd(this->numerator, other.numerator);
+        i64 g2 = gcd(other.denominator, this->denominator);
+
+        __int128 num = static_cast<__int128>(this->numerator / g1) * (other.denominator / g2);
+        __int128 den = static_cast<__int128>(this->denominator / g2) * (other.numerator / g1);
+        return Rational(static_cast<i64>(num), static_cast<i64>(den));
     }
 
+    // compiler makes me explicitly define "=="
     bool operator==(const Rational& other) const = default;
 
     std::strong_ordering operator<=>(const Rational& other) const {
